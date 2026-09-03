@@ -1,0 +1,18 @@
+<!-- prettier-ignore-start -->
+{{ if and (not (.Page.Scratch.Get "katex")) (not (.Page.Param "geekdocMath")) }}
+  <!-- Include KaTeX assets only on first shortcode use, unless already loaded globally via geekdocMath -->
+  <link
+    rel="stylesheet"
+    href="{{ index (index hugo.Data.assets "katex.css") "src" | relURL }}"
+  />
+  <script defer src="{{ index (index hugo.Data.assets "katex.js") "src" | relURL }}"></script>
+{{ end }}
+{{ .Page.Scratch.Set "katex" true }}
+<!-- prettier-ignore-end -->
+
+<span class="gdoc-katex {{ with .Get "class" }}{{ . }}{{ end }}">
+  {{ cond (in .Params "display") "\\[" "\\(" -}}
+  {{- trim .Inner "\n" -}}
+  {{- cond (in .Params "display") "\\]" "\\)" -}}
+</span>
+{{- /* Drop trailing newlines */ -}}

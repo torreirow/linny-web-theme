@@ -1,0 +1,7 @@
+# Hugo
+/public/
+/resources/_gen/
+/.hugo_build.lock
+
+# local module cache probes
+/exampleSite/public/

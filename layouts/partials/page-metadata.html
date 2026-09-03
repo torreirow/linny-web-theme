@@ -1,0 +1,10 @@
+{{- /* Override van geekdoc's page-metadata: Created (crdate -> .Date) en, indien
+       ná aanmaak gewijzigd, Updated (.Lastmod via enableGitInfo) — op ÉÉN regel. */ -}}
+<span class="flex align-center no-wrap" style="gap:.4rem">
+  <svg class="gdoc-icon gdoc_date"><use xlink:href="#gdoc_date"></use></svg>
+  <time datetime="{{ .Date.Format "2006-01-02T15:04:05Z07:00" | safeHTML }}">Created {{ .Date.Format "Jan 2, 2006" }}</time>
+  {{- if and (not .Lastmod.IsZero) (.Lastmod.After (.Date.AddDate 0 0 1)) }}
+  <span aria-hidden="true">·</span>
+  <time datetime="{{ .Lastmod.Format "2006-01-02T15:04:05Z07:00" | safeHTML }}">Updated {{ .Lastmod.Format "Jan 2, 2006" }}</time>
+  {{- end }}
+</span>

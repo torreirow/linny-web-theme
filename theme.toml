@@ -1,0 +1,19 @@
+name = "Linny Web Theme"
+license = "MIT"
+licenselink = "https://github.com/torreirow/linny-web-theme/blob/main/LICENSE"
+description = "Searchable local HTML web-view for Linny markdown notebooks. Bundles the (MIT) hugo-geekdoc theme plus Linny-specific layouts, config defaults and overview pages."
+homepage = "https://github.com/torreirow/linny-web-theme"
+demosite = "https://github.com/torreirow/linny-web-theme"
+tags = ["notes", "documentation", "search", "geekdoc", "linny"]
+features = ["search", "taxonomies", "responsive"]
+min_version = "0.100.0"
+
+[author]
+  name = "Wouter van der Toorren"
+
+# This theme vendors the prebuilt hugo-geekdoc release (v4.1.2, MIT) — see
+# LICENSE.geekdoc and README.md ("Updating the bundled geekdoc").
+[original]
+  name = "hugo-geekdoc"
+  homepage = "https://github.com/thegeeklab/hugo-geekdoc"
+  repo = "https://github.com/thegeeklab/hugo-geekdoc"

@@ -1,0 +1,31 @@
+{{ define "main" }}
+  {{ partial "page-header" . }}
+  <article class="gdoc-markdown" id="main-content" tabindex="-1">
+    <h1>{{ .Title }}</h1>
+
+    {{/* Alleen echte notities: die hebben een crdate in de frontmatter. Zo vallen
+         de overzichtspagina's zelf en de search-pagina buiten de lijst. */}}
+    {{ $notes := where site.RegularPages "Params.crdate" "!=" nil }}
+    {{ $sortby := .Params.sortby | default "date" }}
+    {{ $sorted := $notes.ByDate.Reverse }}
+    {{ if eq $sortby "title" }}{{ $sorted = $notes.ByTitle }}{{ end }}
+
+    {{ $p := .Paginate $sorted }}
+    <p><em>{{ len $notes }} notities · {{ if eq $sortby "title" }}op titel{{ else }}op datum (nieuwste eerst){{ end }} · pagina {{ $p.PageNumber }}/{{ $p.TotalPages }}</em></p>
+    <ul class="gdoc-noteslist">
+      {{ range $p.Pages }}
+        <li>
+          <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+          <time>{{ .Date.Format "2006-01-02" }}</time>
+        </li>
+      {{ end }}
+    </ul>
+    {{ if gt $p.TotalPages 1 }}
+    <nav class="gdoc-noteslist__pager" style="display:flex;gap:1rem;justify-content:space-between;margin-top:1.5rem">
+      <span>{{ if $p.HasPrev }}<a href="{{ $p.Prev.URL }}">← vorige</a>{{ end }}</span>
+      <span>pagina {{ $p.PageNumber }} van {{ $p.TotalPages }}</span>
+      <span>{{ if $p.HasNext }}<a href="{{ $p.Next.URL }}">volgende →</a>{{ end }}</span>
+    </nav>
+    {{ end }}
+  </article>
+{{ end }}
