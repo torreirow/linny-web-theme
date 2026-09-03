@@ -1,50 +1,23 @@
 # linny-web-theme — config defaults
 #
-# Hugo only merges a LIMITED set of config keys from a theme/module into the
-# consuming site: `taxonomies`, `menu` and `params` DO merge (the notebook wins
-# on conflicts). Root-level keys such as `markup`, `frontmatter`, `pagination`,
-# `outputs` and `enableGitInfo` do NOT merge from a theme — those must live in
-# the notebook's own hugo-web.yaml. The linny-notebook-template ships a complete
-# hugo-web.yaml with exactly those keys; see this theme's README.
+# Hugo only merges `params` from a theme/module into the consuming site (the
+# notebook wins on conflicts). Site-level config — `taxonomies`, `menu`,
+# `markup`, `frontmatter`, `pagination`, `outputs`, `enableGitInfo` — is NOT
+# merged from a theme and MUST live in the notebook's own hugo-web.yaml.
 #
-# So a notebook needs, on top of what merges from here:
+# The linny-notebook-template ships a complete hugo-web.yaml with exactly those
+# keys (taxonomies customer/project/type/tags, the top menu, the crdate->date
+# mapping, goldmark unsafe, pagerSize, enableGitInfo). See this theme's README.
+#
+# So a notebook needs, on top of the geekdoc params that merge from here:
 #   title / baseURL / languageCode / enableGitInfo
-#   markup (goldmark.unsafe + highlight)  ·  frontmatter.date (crdate mapping)
-#   pagination.pagerSize                  ·  module.imports (this theme)
-
-# --- these DO merge into the notebook ---
-
-# Taxonomies that Linny notebooks use.
-taxonomies:
-  tags: "tags"
-  project: "project"
-  customer: "customer"
-  type: "type"
-
-# Top menu: the four taxonomy landing pages.
-menu:
-  main:
-    - identifier: customers
-      name: Customers
-      url: /customer/
-      weight: 10
-    - identifier: projects
-      name: Projects
-      url: /project/
-      weight: 20
-    - identifier: types
-      name: Types
-      url: /type/
-      weight: 30
-    - identifier: tags
-      name: Tags
-      url: /tags/
-      weight: 40
+#   taxonomies + menu + markup + frontmatter.date + pagination
+#   module.imports (this theme)
 
 params:
   description: "Linny note-taking system"
 
-  # geekdoc options — sensible defaults for a Linny notebook.
+  # geekdoc options — sensible defaults for a Linny notebook (these DO merge).
   geekdocRepo: ""
   geekdocEditPath: ""
   geekdocSearch: true

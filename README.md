@@ -23,20 +23,43 @@ hugo mod init github.com/you/your-notebook
 hugo mod get github.com/torreirow/linny-web-theme
 ```
 
-Create a minimal `hugo-web.yaml` (everything else comes from the theme):
+Create a `hugo-web.yaml`. Hugo only merges **`params`** from a theme (so the
+geekdoc options come from the theme automatically), but **site-level config —
+taxonomies, menu, markup, frontmatter, pagination, `enableGitInfo` — is not
+merged from a theme** and must live here:
 
 ```yaml
 title: "My Notes"
 baseURL: "http://localhost:9999/"
 languageCode: "nl-nl"
+enableGitInfo: true            # git "Updated on …" date
 
-# Show the git "Updated on …" date (root setting — must live here, not in the theme).
-enableGitInfo: true
+taxonomies:
+  tags: "tags"
+  project: "project"
+  customer: "customer"
+  type: "type"
+
+menu:
+  main:
+    - {identifier: customers, name: Customers, url: /customer/, weight: 10}
+    - {identifier: projects,  name: Projects,  url: /project/,  weight: 20}
+    - {identifier: types,     name: Types,     url: /type/,     weight: 30}
+    - {identifier: tags,      name: Tags,      url: /tags/,     weight: 40}
+
+pagination: {pagerSize: 20}
+markup:
+  goldmark: {renderer: {unsafe: true}}
+  highlight: {style: monokai, lineNos: true}
+frontmatter:
+  date: [crdate, date, publishDate, lastmod]   # map Linny's crdate to .Date
 
 module:
   imports:
     - path: github.com/torreirow/linny-web-theme
 ```
+
+The [linny-notebook-template](https://github.com/linden-project/linny-notebook-template) ships this file ready-made — copy it into any notebook.
 
 Serve it — keeping the notebook's Linny `config/` (the linny.vim JSON indexer) out of the web build with `--configDir doesnotexist`:
 
