@@ -1,98 +1,159 @@
 {{ $current := . }}
-{{ template "tree-nav" dict "sect" .Site.Home.Sections "current" $current }}
 
-
-<!-- templates -->
-{{ define "tree-nav" }}
-  {{ $current := .current }}
-
-
-  <ul class="gdoc-nav__list">
-    {{ $sortBy := (default "title" .current.Site.Params.geekdocFileTreeSortBy | lower) }}
-    {{ range .sect.GroupBy "Weight" }}
-      {{ $rangeBy := .ByTitle }}
-
-      {{ if eq $sortBy "title" }}
-        {{ $rangeBy = .ByTitle }}
-      {{ else if eq $sortBy "linktitle" }}
-        {{ $rangeBy = .ByLinkTitle }}
-      {{ else if eq $sortBy "date" }}
-        {{ $rangeBy = .ByDate }}
-      {{ else if eq $sortBy "publishdate" }}
-        {{ $rangeBy = .ByPublishDate }}
-      {{ else if eq $sortBy "expirydate" }}
-        {{ $rangeBy = .ByExpiryDate }}
-      {{ else if eq $sortBy "lastmod" }}
-        {{ $rangeBy = .ByLastmod }}
-      {{ else if eq $sortBy "title_reverse" }}
-        {{ $rangeBy = .ByTitle.Reverse }}
-      {{ else if eq $sortBy "linktitle_reverse" }}
-        {{ $rangeBy = .ByLinkTitle.Reverse }}
-      {{ else if eq $sortBy "date_reverse" }}
-        {{ $rangeBy = .ByDate.Reverse }}
-      {{ else if eq $sortBy "publishdate_reverse" }}
-        {{ $rangeBy = .ByPublishDate.Reverse }}
-      {{ else if eq $sortBy "expirydate_reverse" }}
-        {{ $rangeBy = .ByExpiryDate.Reverse }}
-      {{ else if eq $sortBy "lastmod_reverse" }}
-        {{ $rangeBy = .ByLastmod.Reverse }}
-      {{ end }}
-
-      {{ range $rangeBy }}
-        {{ if not .Params.geekdocHidden }}
-          {{ $numberOfPages := (add (len .Pages) (len .Sections)) }}
-          {{ $isParent := and (ne $numberOfPages 0) (not .Params.geekdocFlatSection) }}
-          {{ $isCurrent := eq $current . }}
-          {{ $isAncestor := .IsAncestor $current }}
-          {{ $id := substr (sha1 .Permalink) 0 8 }}
-          {{ $doCollapse := and $isParent (or .Params.geekdocCollapseSection (default false .Site.Params.geekdocCollapseAllSections)) }}
-
-
+<ul class="gdoc-nav__list">
+  <!-- Taxonomy sections -->
+  <li class="gdoc-nav__section">
+    <span class="flex justify-between">
+      <span class="gdoc-nav__entry">📁 Taxonomies</span>
+    </span>
+    <ul>
+      <!-- Customers -->
+      <li>
+        <input type="checkbox" id="nav-customers" class="gdoc-nav__toggle" />
+        <label for="nav-customers" class="flex justify-between">
+          <span class="gdoc-nav__entry">👥 Customers ({{ len .Site.Taxonomies.customer }})</span>
+        </label>
+        <ul>
+          {{ range .Site.Taxonomies.customer.Alphabetical }}
           <li>
-            <input
-              type="checkbox"
-              {{ if $doCollapse }}
-                class="gdoc-nav__toggle" id="{{ printf "navtree-%s" $id }}"
-                {{ if or $isCurrent $isAncestor }}checked{{ end }}
-              {{ else }}
-                class="hidden"
-              {{ end }}
-            />
-            <label
-              {{ if $doCollapse }}
-                for="{{ printf "navtree-%s" $id }}" class="flex justify-between align-center"
-              {{ end }}
-            >
-              {{ if or .Content .Params.geekdocFlatSection }}
-                <span class="flex">
-                  <a
-                    href="{{ .RelPermalink }}"
-                    class="gdoc-nav__entry{{- if eq $current . }}
-                      {{- printf " is-active" }}
-                    {{- end }}"
-                  >
-                    {{ partial "utils/title" . }}
-                  </a>
-                </span>
-              {{ else }}
-                <span class="flex">{{ partial "utils/title" . }}</span>
-              {{ end }}
-              {{ if $doCollapse }}
-                <svg class="gdoc-icon toggle gdoc_keyboard_arrow_left">
-                  <use xlink:href="#gdoc_keyboard_arrow_left"></use>
-                </svg>
-                <svg class="gdoc-icon toggle gdoc_keyboard_arrow_down">
-                  <use xlink:href="#gdoc_keyboard_arrow_down"></use>
-                </svg>
-              {{ end }}
+            <input type="checkbox" id="nav-customer-{{ .Page.Title | urlize }}" class="gdoc-nav__toggle" />
+            <label for="nav-customer-{{ .Page.Title | urlize }}" class="flex justify-between">
+              <span class="gdoc-nav__entry">{{ .Page.Title }} ({{ .Count }})</span>
             </label>
-
-            {{ if $isParent }}
-              {{ template "tree-nav" dict "sect" .Pages "current" $current }}
-            {{ end }}
+            <ul>
+              {{ range .Pages.ByDate.Reverse }}
+              <li>
+                <a href="{{ .RelPermalink }}" class="gdoc-nav__entry {{ if eq $current.RelPermalink .RelPermalink }}is-active{{ end }}">
+                  <span>{{ .Title }}</span>
+                </a>
+              </li>
+              {{ end }}
+            </ul>
           </li>
+          {{ end }}
+        </ul>
+      </li>
+
+      <!-- Projects -->
+      <li>
+        <input type="checkbox" id="nav-projects" class="gdoc-nav__toggle" />
+        <label for="nav-projects" class="flex justify-between">
+          <span class="gdoc-nav__entry">📊 Projects ({{ len .Site.Taxonomies.project }})</span>
+        </label>
+        <ul>
+          {{ range .Site.Taxonomies.project.Alphabetical }}
+          <li>
+            <input type="checkbox" id="nav-project-{{ .Page.Title | urlize }}" class="gdoc-nav__toggle" />
+            <label for="nav-project-{{ .Page.Title | urlize }}" class="flex justify-between">
+              <span class="gdoc-nav__entry">{{ .Page.Title }} ({{ .Count }})</span>
+            </label>
+            <ul>
+              {{ range .Pages.ByDate.Reverse }}
+              <li>
+                <a href="{{ .RelPermalink }}" class="gdoc-nav__entry {{ if eq $current.RelPermalink .RelPermalink }}is-active{{ end }}">
+                  <span>{{ .Title }}</span>
+                </a>
+              </li>
+              {{ end }}
+            </ul>
+          </li>
+          {{ end }}
+        </ul>
+      </li>
+
+      <!-- Types -->
+      <li>
+        <input type="checkbox" id="nav-types" class="gdoc-nav__toggle" />
+        <label for="nav-types" class="flex justify-between">
+          <span class="gdoc-nav__entry">🏷️ Types ({{ len .Site.Taxonomies.type }})</span>
+        </label>
+        <ul>
+          {{ range .Site.Taxonomies.type.Alphabetical }}
+          <li>
+            <input type="checkbox" id="nav-type-{{ .Page.Title | urlize }}" class="gdoc-nav__toggle" />
+            <label for="nav-type-{{ .Page.Title | urlize }}" class="flex justify-between">
+              <span class="gdoc-nav__entry">{{ .Page.Title }} ({{ .Count }})</span>
+            </label>
+            <ul>
+              {{ range .Pages.ByDate.Reverse }}
+              <li>
+                <a href="{{ .RelPermalink }}" class="gdoc-nav__entry {{ if eq $current.RelPermalink .RelPermalink }}is-active{{ end }}">
+                  <span>{{ .Title }}</span>
+                </a>
+              </li>
+              {{ end }}
+            </ul>
+          </li>
+          {{ end }}
+        </ul>
+      </li>
+
+      <!-- Tags -->
+      <li>
+        <input type="checkbox" id="nav-tags" class="gdoc-nav__toggle" />
+        <label for="nav-tags" class="flex justify-between">
+          <span class="gdoc-nav__entry">🔖 Tags ({{ len .Site.Taxonomies.tags }})</span>
+        </label>
+        <ul>
+          {{ range .Site.Taxonomies.tags.Alphabetical }}
+          <li>
+            <input type="checkbox" id="nav-tag-{{ .Page.Title | urlize }}" class="gdoc-nav__toggle" />
+            <label for="nav-tag-{{ .Page.Title | urlize }}" class="flex justify-between">
+              <span class="gdoc-nav__entry">{{ .Page.Title }} ({{ .Count }})</span>
+            </label>
+            <ul>
+              {{ range .Pages.ByDate.Reverse }}
+              <li>
+                <a href="{{ .RelPermalink }}" class="gdoc-nav__entry {{ if eq $current.RelPermalink .RelPermalink }}is-active{{ end }}">
+                  <span>{{ .Title }}</span>
+                </a>
+              </li>
+              {{ end }}
+            </ul>
+          </li>
+          {{ end }}
+        </ul>
+      </li>
+    </ul>
+  </li>
+
+  <!-- All notes -->
+  <li class="gdoc-nav__section">
+    <input type="checkbox" id="nav-all-notes" class="gdoc-nav__toggle" />
+    <label for="nav-all-notes" class="flex justify-between">
+      <span class="gdoc-nav__entry">📝 All Notes (by title)</span>
+    </label>
+    <ul>
+      {{ range .Site.RegularPages.ByTitle }}
+        {{ $isNotTaxonomy := and (ne .Section "customer") (ne .Section "project") (ne .Section "type") (ne .Section "tags") }}
+        {{ if and $isNotTaxonomy (not .Params.geekdocHidden) }}
+        <li>
+          <a href="{{ .RelPermalink }}" class="gdoc-nav__entry {{ if eq $current.RelPermalink .RelPermalink }}is-active{{ end }}">
+            <span>{{ .Title }}</span>
+          </a>
+        </li>
         {{ end }}
       {{ end }}
-    {{ end }}
-  </ul>
-{{ end }}
+    </ul>
+  </li>
+
+  <!-- All notes by date -->
+  <li class="gdoc-nav__section">
+    <input type="checkbox" id="nav-all-notes-date" class="gdoc-nav__toggle" />
+    <label for="nav-all-notes-date" class="flex justify-between">
+      <span class="gdoc-nav__entry">📅 All Notes (by date)</span>
+    </label>
+    <ul>
+      {{ range .Site.RegularPages.ByDate.Reverse }}
+        {{ $isNotTaxonomy := and (ne .Section "customer") (ne .Section "project") (ne .Section "type") (ne .Section "tags") }}
+        {{ if and $isNotTaxonomy (not .Params.geekdocHidden) }}
+        <li>
+          <a href="{{ .RelPermalink }}" class="gdoc-nav__entry {{ if eq $current.RelPermalink .RelPermalink }}is-active{{ end }}">
+            <span>{{ .Title }}</span>
+          </a>
+        </li>
+        {{ end }}
+      {{ end }}
+    </ul>
+  </li>
+</ul>
