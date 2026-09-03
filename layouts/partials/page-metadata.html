@@ -1,5 +1,5 @@
-{{- /* Override van geekdoc's page-metadata: Created (crdate -> .Date) en, indien
-       ná aanmaak gewijzigd, Updated (.Lastmod via enableGitInfo) — op ÉÉN regel. */ -}}
+{{- /* Override of geekdoc's page-metadata: Created (crdate -> .Date) and, if
+       modified after creation, Updated (.Lastmod via enableGitInfo) — on ONE line. */ -}}
 <span class="flex align-center no-wrap" style="gap:.4rem">
   <svg class="gdoc-icon gdoc_date"><use xlink:href="#gdoc_date"></use></svg>
   <time datetime="{{ .Date.Format "2006-01-02T15:04:05Z07:00" | safeHTML }}">Created {{ .Date.Format "Jan 2, 2006" }}</time>

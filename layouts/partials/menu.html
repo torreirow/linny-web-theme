@@ -1,11 +1,11 @@
-{{- /* Override van geekdoc's menu.html: voegt bovenaan de zijbalk een klein
-       "Overzichten"-blok toe met links naar de paginated notitie-overzichten.
-       De rest (zoek, taxonomie-filetree, tags, more) is identiek aan het thema. */ -}}
+{{- /* Override of geekdoc's menu.html: adds a small "Overviews" block at the top
+       of the sidebar with links to the paginated note overview pages. The rest
+       (search, taxonomy file-tree, tags, more) is identical to the theme. */ -}}
 <nav>
   {{ partial "search" . }}
 
   <section class="gdoc-nav--main">
-    <h2>Overzichten</h2>
+    <h2>Overviews</h2>
     <ul class="gdoc-nav__list">
       <li>
         <a class="gdoc-nav__entry{{ if eq .RelPermalink (relURL "/notes-by-title/") }} is-active{{ end }}"

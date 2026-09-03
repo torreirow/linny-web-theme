@@ -3,15 +3,15 @@
   <article class="gdoc-markdown" id="main-content" tabindex="-1">
     <h1>{{ .Title }}</h1>
 
-    {{/* Alleen echte notities: die hebben een crdate in de frontmatter. Zo vallen
-         de overzichtspagina's zelf en de search-pagina buiten de lijst. */}}
+    {{/* Only real notes have a crdate in their front matter, so the overview
+         pages themselves and the search page fall outside the list. */}}
     {{ $notes := where site.RegularPages "Params.crdate" "!=" nil }}
     {{ $sortby := .Params.sortby | default "date" }}
     {{ $sorted := $notes.ByDate.Reverse }}
     {{ if eq $sortby "title" }}{{ $sorted = $notes.ByTitle }}{{ end }}
 
     {{ $p := .Paginate $sorted }}
-    <p><em>{{ len $notes }} notities · {{ if eq $sortby "title" }}op titel{{ else }}op datum (nieuwste eerst){{ end }} · pagina {{ $p.PageNumber }}/{{ $p.TotalPages }}</em></p>
+    <p><em>{{ len $notes }} notes · {{ if eq $sortby "title" }}by title{{ else }}by date (newest first){{ end }} · page {{ $p.PageNumber }}/{{ $p.TotalPages }}</em></p>
     <ul class="gdoc-noteslist">
       {{ range $p.Pages }}
         <li>
@@ -22,9 +22,9 @@
     </ul>
     {{ if gt $p.TotalPages 1 }}
     <nav class="gdoc-noteslist__pager" style="display:flex;gap:1rem;justify-content:space-between;margin-top:1.5rem">
-      <span>{{ if $p.HasPrev }}<a href="{{ $p.Prev.URL }}">← vorige</a>{{ end }}</span>
-      <span>pagina {{ $p.PageNumber }} van {{ $p.TotalPages }}</span>
-      <span>{{ if $p.HasNext }}<a href="{{ $p.Next.URL }}">volgende →</a>{{ end }}</span>
+      <span>{{ if $p.HasPrev }}<a href="{{ $p.Prev.URL }}">← previous</a>{{ end }}</span>
+      <span>page {{ $p.PageNumber }} of {{ $p.TotalPages }}</span>
+      <span>{{ if $p.HasNext }}<a href="{{ $p.Next.URL }}">next →</a>{{ end }}</span>
     </nav>
     {{ end }}
   </article>
