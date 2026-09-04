@@ -69,6 +69,86 @@ hugo server --config hugo-web.yaml --configDir doesnotexist --bind 0.0.0.0 --por
 
 The [linny-notebook-template](https://github.com/linden-project/linny-notebook-template) ships a ready-made `hugo-web.yaml` + `start-web.sh` so a fresh notebook has the web-view out of the box.
 
+## Serve it on NixOS (`services.linny-web`)
+
+This repo also ships a **reusable NixOS module** (`nixosModules.linny-web`) that clones a
+**private** notebook repo, builds it with this theme and publishes it as a robust static site —
+**atomic swap + keep-last-good**, auto-rebuilt on a timer. It is the generic, webserver-agnostic
+form of what powers [`linny.toorren.net`](https://linny.toorren.net).
+
+The minimal one-time config is **three fields**: `gitRepo`, `gitTokenFile` and `baseURL`.
+
+```nix
+# flake.nix
+{
+  inputs.linny-web.url = "github:torreirow/linny-web-theme";
+  # … your other inputs (nixpkgs, …)
+}
+```
+
+```nix
+# configuration.nix
+{ config, inputs, ... }:
+{
+  imports = [ inputs.linny-web.nixosModules.linny-web ];
+
+  services.linny-web = {
+    enable       = true;
+    gitRepo      = "https://github.com/you/your-notebook.git";
+    gitTokenFile = "/run/agenix/linny-notes-token";  # fine-grained PAT, Contents: read
+    baseURL      = "https://notes.example.com/";
+  };
+}
+```
+
+- **`gitTokenFile`** points at a file holding a GitHub **fine-grained token** (scope *Contents:
+  read-only* on the notebook repo). The module reads it through a git credential helper at auth
+  time, so the token never appears in the process list or the on-disk git config. You decide how the
+  file gets there (agenix, sops-nix, a plain root-only file).
+- The rendered site is published (world-readable) at **`config.services.linny-web.webRoot`**
+  (default `/var/lib/linny-web/live`); the raw notes checkout stays private (`0700`).
+
+### Point your web server at it
+
+The module is **webserver-agnostic** — it just publishes `webRoot`:
+
+```nix
+# nginx
+services.nginx.virtualHosts."notes.example.com".root = config.services.linny-web.webRoot;
+# or apache
+services.httpd.virtualHosts."notes.example.com".documentRoot = config.services.linny-web.webRoot;
+```
+
+Prefer nginx and want it wired for you (incl. TLS)? Use the optional helper:
+
+```nix
+services.linny-web.nginx = {
+  enable      = true;
+  virtualHost = "notes.example.com";
+  useACMEHost = "example.com";   # forceSSL with this ACME certificate
+};
+```
+
+### Options
+
+| Option         | Required | Default                                 | Role                                   |
+|----------------|:--------:|-----------------------------------------|----------------------------------------|
+| `gitRepo`      | ✅       | –                                       | HTTPS URL of the private notebook repo |
+| `gitTokenFile` | ✅       | –                                       | path to a fine-grained PAT             |
+| `baseURL`      | ✅       | –                                       | `hugo --baseURL`                       |
+| `webRoot`      | –        | `${stateDir}/live`                      | live dir your web server serves        |
+| `stateDir`     | –        | `/var/lib/linny-web`                    | checkout / builds / module cache       |
+| `user`         | –        | `linny-web`                             | service user                           |
+| `branch`       | –        | `main`                                  | notebook branch to track               |
+| `configFile`   | –        | `hugo-web.yaml`                         | notebook web config (imports the theme)|
+| `themeModule`  | –        | `github.com/torreirow/linny-web-theme`  | theme module (`hugo mod get`, bumpable)|
+| `interval`     | –        | `3min`                                  | rebuild-timer poll (change-detected)   |
+| `nginx.*`      | –        | disabled                                | optional native nginx helper           |
+
+**Requires** `go` (fetched by the service) and `hugo`; a fresh notebook also needs a
+`hugo-web.yaml` (see *Use it in a notebook* above). If the notebook ships a `fence.py`, the module
+runs it as a pre-Hugo pass automatically.
+
 ## Box-drawing CLI tables (`fence.py`)
 
 Notes that paste box-drawing CLI output (e.g. `aws … --output table`, U+2500–U+259F) render as broken paragraphs because Markdown collapses them. The fix runs **before** Hugo (a theme only sees already-parsed content), so it lives in the **runner**, not here: the template's `start-web.sh` runs `fence.py` over a staging copy of the content (source untouched, idempotent) to wrap contiguous box-drawing runs in a ` ```text ` fence. See the template repo.
