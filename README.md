@@ -76,7 +76,8 @@ This repo also ships a **reusable NixOS module** (`nixosModules.linny-web`) that
 **atomic swap + keep-last-good**, auto-rebuilt on a timer. It is the generic, webserver-agnostic
 form of what powers [`linny.toorren.net`](https://linny.toorren.net).
 
-The minimal one-time config is **three fields**: `gitRepo`, `gitTokenFile` and `baseURL`.
+The minimal one-time config is **three fields**: `gitRepo`, an auth secret
+(`gitTokenFile` **or** `gitSshKeyFile`) and `baseURL`.
 
 ```nix
 # flake.nix
@@ -101,10 +102,14 @@ The minimal one-time config is **three fields**: `gitRepo`, `gitTokenFile` and `
 }
 ```
 
-- **`gitTokenFile`** points at a file holding a GitHub **fine-grained token** (scope *Contents:
-  read-only* on the notebook repo). The module reads it through a git credential helper at auth
-  time, so the token never appears in the process list or the on-disk git config. You decide how the
-  file gets there (agenix, sops-nix, a plain root-only file).
+- **Auth** — set **exactly one**:
+  - **`gitTokenFile`** (HTTPS `gitRepo`): a file with a GitHub **fine-grained token** (scope
+    *Contents: read-only*). Read through a git credential helper at auth time, so the token never
+    appears in the process list or the on-disk git config.
+  - **`gitSshKeyFile`** (`git@`/`ssh://` `gitRepo`): a private **SSH deploy key** (read-only), used
+    via `GIT_SSH_COMMAND` with `IdentitiesOnly` (no ssh-agent).
+
+  You decide how the secret file gets there (agenix, sops-nix, a plain root-only file).
 - The rendered site is published (world-readable) at **`config.services.linny-web.webRoot`**
   (default `/var/lib/linny-web/live`); the raw notes checkout stays private (`0700`).
 
@@ -133,8 +138,9 @@ services.linny-web.nginx = {
 
 | Option         | Required | Default                                 | Role                                   |
 |----------------|:--------:|-----------------------------------------|----------------------------------------|
-| `gitRepo`      | ✅       | –                                       | HTTPS URL of the private notebook repo |
-| `gitTokenFile` | ✅       | –                                       | path to a fine-grained PAT             |
+| `gitRepo`      | ✅       | –                                       | URL of the private notebook repo (HTTPS or SSH) |
+| `gitTokenFile` | ⬥        | –                                       | fine-grained PAT (HTTPS); or use `gitSshKeyFile` |
+| `gitSshKeyFile`| ⬥        | –                                       | SSH deploy key (SSH); or use `gitTokenFile`      |
 | `baseURL`      | ✅       | –                                       | `hugo --baseURL`                       |
 | `webRoot`      | –        | `${stateDir}/live`                      | live dir your web server serves        |
 | `stateDir`     | –        | `/var/lib/linny-web`                    | checkout / builds / module cache       |
@@ -144,6 +150,8 @@ services.linny-web.nginx = {
 | `themeModule`  | –        | `github.com/torreirow/linny-web-theme`  | theme module (`hugo mod get`, bumpable)|
 | `interval`     | –        | `3min`                                  | rebuild-timer poll (change-detected)   |
 | `nginx.*`      | –        | disabled                                | optional native nginx helper           |
+
+⬥ = set **exactly one** of `gitTokenFile` / `gitSshKeyFile`.
 
 **Requires** `go` (fetched by the service) and `hugo`; a fresh notebook also needs a
 `hugo-web.yaml` (see *Use it in a notebook* above). If the notebook ships a `fence.py`, the module

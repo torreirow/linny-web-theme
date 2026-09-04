@@ -21,6 +21,26 @@ with lib;
 let
   cfg = config.services.linny-web;
 
+  sshMode = cfg.gitSshKeyFile != null;
+
+  # Auth prelude injected into the build script (after WORK is set). Both branches
+  # define a git_auth() wrapper used for the clone/fetch.
+  gitAuthDef =
+    if sshMode then ''
+      # SSH deploy-key auth: known_hosts pinned in the work dir, no ssh-agent.
+      export GIT_SSH_COMMAND="ssh -i ${cfg.gitSshKeyFile} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=$WORK/known_hosts"
+      git_auth() { git "$@"; }
+    '' else ''
+      # Fine-grained token auth: the credential helper runs `cat <gitTokenFile>` only
+      # when git asks for a password, so the token is never in argv nor in .git/config.
+      git_auth() {
+        git \
+          -c credential.helper='!f() { test "$1" = get && printf "username=x-access-token\npassword=%s\n" "$(cat ${cfg.gitTokenFile})"; }; f' \
+          -c credential.useHttpPath=false \
+          "$@"
+      }
+    '';
+
   buildScript = pkgs.writeShellScript "linny-web-build" ''
     set -euo pipefail
 
@@ -45,15 +65,9 @@ let
 
     mkdir -p "$BUILDS" "$GOPATH" "$GOCACHE" "$HUGO_CACHEDIR"
 
-    # git wrapper that authenticates via a fine-grained token WITHOUT exposing it.
-    # The credential helper runs `cat <gitTokenFile>` only when git asks for a
-    # password, so the token is never in argv (ps) nor written to .git/config.
-    git_auth() {
-      git \
-        -c credential.helper='!f() { test "$1" = get && printf "username=x-access-token\npassword=%s\n" "$(cat ${cfg.gitTokenFile})"; }; f' \
-        -c credential.useHttpPath=false \
-        "$@"
-    }
+    # Define git_auth(): token (credential helper) or SSH (GIT_SSH_COMMAND). The
+    # secret never lands in argv, the repo URL, or the on-disk git config.
+    ${gitAuthDef}
 
     ## 1. sync (FULL clone for enableGitInfo/.Lastmod) + change detection
     if [ ! -d "$CHECKOUT/.git" ]; then
@@ -123,13 +137,26 @@ in {
     };
 
     gitTokenFile = mkOption {
-      type = types.str;
+      type = types.nullOr types.str;
+      default = null;
       example = "/run/agenix/linny-notes-token";
       description = ''
-        Path to a file containing a fine-grained access token (scope: Contents
-        read-only) for the notebook repo. Read at auth time via a git credential
-        helper, so the token never appears in argv or the git config. You choose
-        how it gets there (agenix, sops-nix, plain file, ...).
+        HTTPS auth: path to a file with a fine-grained access token (scope:
+        Contents read-only) for the notebook repo. Read at auth time via a git
+        credential helper, so the token never appears in argv or the git config.
+        Set exactly one of `gitTokenFile` or `gitSshKeyFile`.
+      '';
+    };
+
+    gitSshKeyFile = mkOption {
+      type = types.nullOr types.str;
+      default = null;
+      example = "/run/agenix/linny-notes-deploy-key";
+      description = ''
+        SSH auth: path to a private SSH deploy key (read-only) for the notebook
+        repo; use with an `ssh://`/`git@` `gitRepo`. Used via GIT_SSH_COMMAND with
+        IdentitiesOnly (no ssh-agent). Set exactly one of `gitTokenFile` or
+        `gitSshKeyFile`.
       '';
     };
 
@@ -207,6 +234,10 @@ in {
 
   config = mkIf cfg.enable {
     assertions = [
+      {
+        assertion = (cfg.gitTokenFile != null) != (cfg.gitSshKeyFile != null);
+        message = "services.linny-web: set exactly one of gitTokenFile (HTTPS token) or gitSshKeyFile (SSH deploy key).";
+      }
       {
         assertion = !cfg.nginx.enable || cfg.nginx.virtualHost != "";
         message = "services.linny-web.nginx.enable requires services.linny-web.nginx.virtualHost.";

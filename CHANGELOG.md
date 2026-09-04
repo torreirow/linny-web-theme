@@ -5,6 +5,8 @@ All notable changes to linny-web-theme. Format based on [Keep a Changelog](https
 ## NEXT VERSION
 
 ### Added
+- **SSH deploy-key auth** for the NixOS module (`gitSshKeyFile`), alongside the fine-grained token
+  (`gitTokenFile`) — set exactly one. Lets a notebook keep an existing read-only SSH deploy key.
 - **Reusable NixOS module** (`nixosModules.linny-web`, via the new `flake.nix`): serve a private
   Linny notebook as a searchable static site with minimal one-time config.
   - Minimal config is **three fields**: `gitRepo`, `gitTokenFile`, `baseURL`.
