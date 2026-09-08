@@ -30,3 +30,13 @@ params:
   geekdocBackToTop: true
   # Show "Updated on …" from git .Lastmod (needs enableGitInfo in the notebook).
   geekdocPageLastmod: true
+
+  # In-page note editor: a pencil on every note that edits the raw Markdown
+  # source in place. Off by default, and additionally suppressed unless
+  # hugo.Environment is "development", so it can never reach a published site.
+  # It needs a save endpoint in the notebook (linny-notebook-template ships
+  # edit-server.py); see the README for the contract.
+  linnyEdit: false
+  # Where that endpoint listens. Set linnyEditApi for a full URL, or just the
+  # port if it runs on localhost.
+  linnyEditPort: 9998

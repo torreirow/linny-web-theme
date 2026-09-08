@@ -1,0 +1,24 @@
+{{- /* Linny in-page note editor (opt-in, development only).
+
+       Adds a pencil to the page-header row of a note. Clicking it replaces the
+       rendered article with a textarea holding the note's raw Markdown, and
+       saving PUTs it to a save endpoint that the NOTEBOOK runs -- a theme only
+       ever sees parsed content, so it cannot write files itself. See the
+       "In-page note editor" section of the README for the endpoint contract.
+
+       Two guards, both required:
+         - `params.linnyEdit` must be set by the notebook (default: off), and
+         - hugo.Environment must be "development", which `hugo server` sets and
+           a plain `hugo` build does not.
+       So a published site -- e.g. anything built by services.linny-web -- never
+       ships the editor, even if the param is left on. */ -}}
+{{- if and .IsPage (eq hugo.Environment "development") (default false site.Params.linnyEdit) }}
+  {{- with .File }}
+    <meta name="linny-source" content="{{ .Path }}" />
+  {{- end }}
+  {{- $api := default (printf "http://localhost:%v" (default 9998 site.Params.linnyEditPort)) site.Params.linnyEditApi }}
+  <meta name="linny-edit-api" content="{{ $api }}" />
+  {{- with resources.Get "js/linny-edit.js" }}
+    <script src="{{ (. | minify | fingerprint).RelPermalink }}" defer></script>
+  {{- end }}
+{{- end }}

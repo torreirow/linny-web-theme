@@ -161,6 +161,43 @@ runs it as a pre-Hugo pass automatically.
 
 Notes that paste box-drawing CLI output (e.g. `aws … --output table`, U+2500–U+259F) render as broken paragraphs because Markdown collapses them. The fix runs **before** Hugo (a theme only sees already-parsed content), so it lives in the **runner**, not here: the template's `start-web.sh` runs `fence.py` over a staging copy of the content (source untouched, idempotent) to wrap contiguous box-drawing runs in a ` ```text ` fence. See the template repo.
 
+## In-page note editor (`linnyEdit`)
+
+Notes can be edited **in the rendered page**: a pencil in the page-header row swaps the article for a
+textarea holding the note's **raw Markdown**, front matter included, and saving re-renders it through
+Hugo. Editing the source rather than the rendered HTML is the point — an HTML-to-Markdown round-trip
+would flatten code fences (Chroma emits `lineNos` as table markup), drop shortcodes and lose front
+matter entirely.
+
+Turn it on in the notebook's `hugo-web.yaml`:
+
+```yaml
+params:
+  linnyEdit: true
+  linnyEditPort: 9998        # or linnyEditApi: http://host:port
+```
+
+**A theme cannot write files** — it only ever sees parsed content — so the save endpoint lives in the
+**runner**, like `fence.py`. `linny-notebook-template` ships a conforming one (`edit-server.py`,
+started by `start-web.sh`); any notebook can substitute its own. The contract is two routes, with
+`path` relative to the site's `contentDir`:
+
+| Route | Body | Meaning |
+|-------|------|---------|
+| `GET  /api/note?path=<note>.md` | – | 200 with the raw Markdown source |
+| `PUT  /api/note?path=<note>.md` | the new Markdown | 200 once written |
+
+The theme renders `<meta name="linny-source">` (the note's source path) and
+`<meta name="linny-edit-api">` (the endpoint base) for the client to read.
+
+**It cannot reach a published site.** The editor is emitted only when `linnyEdit` is on *and*
+`hugo.Environment` is `"development"` — which `hugo server` sets and a plain `hugo` build does not.
+So a static build, including anything produced by `services.linny-web`, never ships it regardless of
+the param. Keep the endpoint bound to localhost: it writes to your notes and has no authentication.
+
+Known limitations: no locking (don't edit the same note in `$EDITOR` and the browser at once), and no
+create/rename/delete — that stays linny.vim's job.
+
 ## Updating the bundled geekdoc
 
 geekdoc is vendored from its **prebuilt release tarball** (current: see `GEEKDOC_VERSION`). To bump:
@@ -174,9 +211,11 @@ tmp=$(mktemp -d); tar -xzf /tmp/geekdoc.tar.gz -C "$tmp"
 for d in archetypes assets data i18n images layouts static; do rm -rf "$d"; cp -r "$tmp/$d" .; done
 # … then re-apply the Linny overrides that live on top of geekdoc:
 #   layouts/partials/page-metadata.html, layouts/partials/menu.html,
-#   layouts/_default/noteslist.html   (restore these from git after the copy)
+#   layouts/partials/linny-edit.html, layouts/_default/noteslist.html,
+#   assets/js/linny-edit.js           (restore these from git after the copy)
 cp "$tmp/LICENSE" LICENSE.geekdoc; cp "$tmp/VERSION" GEEKDOC_VERSION
-git checkout -- layouts/partials/page-metadata.html layouts/partials/menu.html layouts/_default/noteslist.html
+git checkout -- layouts/partials/page-metadata.html layouts/partials/menu.html \
+  layouts/partials/linny-edit.html layouts/_default/noteslist.html assets/js/linny-edit.js
 ```
 
 ## What's Linny-specific vs vendored
@@ -186,6 +225,8 @@ git checkout -- layouts/partials/page-metadata.html layouts/partials/menu.html l
 | `layouts/partials/page-metadata.html`          | Linny override (Created + Updated) |
 | `layouts/partials/menu.html`                   | Linny override ("Overzichten" block) |
 | `layouts/_default/noteslist.html`              | Linny (paginated overview) |
+| `layouts/partials/linny-edit.html`             | Linny (in-page editor, opt-in) |
+| `assets/js/linny-edit.js`                      | Linny (in-page editor client) |
 | `content/notes-by-{title,date}/_index.md`      | Linny (overview pages, content-mounted) |
 | `hugo.yaml`                                     | Linny config defaults |
 | everything else (`layouts/`, `static/`, `assets/`, `data/`, `i18n/`, `archetypes/`) | vendored geekdoc v4.x (MIT) |

@@ -2,6 +2,22 @@
 
 All notable changes to linny-web-theme. Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## 0.1.5 - 2026-09-08
+
+### Added
+- **In-page note editor** (`params.linnyEdit`, off by default): a pencil in the page-header row of a
+  note swaps the rendered article for a textarea holding the note's **raw Markdown** (front matter
+  included); saving re-renders it through Hugo, so code fences, shortcodes and front matter survive
+  — an HTML-to-Markdown round-trip would not.
+  - The save endpoint lives in the **notebook**, not here (a theme only sees parsed content):
+    `GET`/`PUT /api/note?path=<note>.md`, advertised to the client via the `linny-source` and
+    `linny-edit-api` meta tags. `linny-notebook-template` ships a conforming `edit-server.py`.
+  - Configurable with `linnyEditPort` (localhost) or `linnyEditApi` (full URL).
+  - **Never reaches a published site**: emitted only when the param is on *and* `hugo.Environment`
+    is `"development"`, so a plain `hugo` build — including `services.linny-web` — omits it.
+  - Reloads the page the moment Hugo finishes rebuilding, by polling the rendered page rather than
+    guessing a delay.
+
 ## 0.1.4 - 2026-09-07
 
 ### Added
