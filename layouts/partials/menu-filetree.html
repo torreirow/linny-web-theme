@@ -89,13 +89,24 @@
       </li>
 
       <!-- Tags -->
+      {{- /* Linny-notitieboeken configureren deze taxonomie als `tag` (zie de
+             indexer-config en linny-mcp); Hugo's eigen standaard is `tags`.
+             Beide moeten verdragen worden.
+
+             LET OP waarom dit `index` is en geen `.Site.Taxonomies.tags`:
+             veldtoegang op een ontbrekende sleutel levert een ONGELDIGE Value,
+             en dan klapt `len` met "reflect: call of reflect.Value.Type on zero
+             Value" -- de hele site bouwt dan niet meer. `index` geeft bij een
+             ontbrekende sleutel een lege Taxonomy terug, en daar werkt zowel
+             `len` als `.Alphabetical` gewoon op. */ -}}
+      {{ $tagTax := or (index .Site.Taxonomies "tag") (index .Site.Taxonomies "tags") }}
       <li>
         <input type="checkbox" id="nav-tags" class="gdoc-nav__toggle" />
         <label for="nav-tags" class="flex justify-between">
-          <span class="gdoc-nav__entry">🔖 Tags ({{ len .Site.Taxonomies.tags }})</span>
+          <span class="gdoc-nav__entry">🔖 Tags ({{ len $tagTax }})</span>
         </label>
         <ul>
-          {{ range .Site.Taxonomies.tags.Alphabetical }}
+          {{ range $tagTax.Alphabetical }}
           <li>
             <input type="checkbox" id="nav-tag-{{ .Page.Title | urlize }}" class="gdoc-nav__toggle" />
             <label for="nav-tag-{{ .Page.Title | urlize }}" class="flex justify-between">
@@ -125,7 +136,7 @@
     </label>
     <ul>
       {{ range .Site.RegularPages.ByTitle }}
-        {{ $isNotTaxonomy := and (ne .Section "customer") (ne .Section "project") (ne .Section "type") (ne .Section "tags") }}
+        {{ $isNotTaxonomy := and (ne .Section "customer") (ne .Section "project") (ne .Section "type") (ne .Section "tags") (ne .Section "tag") }}
         {{ if and $isNotTaxonomy (not .Params.geekdocHidden) }}
         <li>
           <a href="{{ .RelPermalink }}" class="gdoc-nav__entry {{ if eq $current.RelPermalink .RelPermalink }}is-active{{ end }}">
@@ -145,7 +156,7 @@
     </label>
     <ul>
       {{ range .Site.RegularPages.ByDate.Reverse }}
-        {{ $isNotTaxonomy := and (ne .Section "customer") (ne .Section "project") (ne .Section "type") (ne .Section "tags") }}
+        {{ $isNotTaxonomy := and (ne .Section "customer") (ne .Section "project") (ne .Section "type") (ne .Section "tags") (ne .Section "tag") }}
         {{ if and $isNotTaxonomy (not .Params.geekdocHidden) }}
         <li>
           <a href="{{ .RelPermalink }}" class="gdoc-nav__entry {{ if eq $current.RelPermalink .RelPermalink }}is-active{{ end }}">
