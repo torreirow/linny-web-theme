@@ -2,6 +2,24 @@
 
 All notable changes to linny-web-theme. Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## 0.1.6 - 2026-09-28
+
+### Fixed
+- **Sidebar tags work for notebooks that configure the taxonomy as `tag`.** Linny notebooks use the
+  singular `tag` — that is what the indexer config and linny-mcp report — while Hugo's own default
+  is `tags`. `menu-filetree.html` hard-coded `tags`, so such a notebook showed `Tags (0)` in the
+  sidebar even though the tags were there. Worse, setting the site config to `tag` made the whole
+  site fail to build:
+
+  ```
+  error calling len: reflect: call of reflect.Value.Type on zero Value
+  ```
+
+  Field access on a missing key yields an *invalid* Value; `index` yields an empty Taxonomy, which
+  `len` and `.Alphabetical` handle fine. Both spellings are now tolerated, and both are excluded
+  from the flat page lists. The other three taxonomies (`customer`, `project`, `type`) were already
+  singular — `tags` was the only outlier.
+
 ## 0.1.5 - 2026-09-08
 
 ### Added
